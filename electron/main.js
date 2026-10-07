@@ -1915,74 +1915,14 @@ async function bootstrap() {
       createWindow(true);
       return;
     }
-    // Any other sidecar failure (health timeout, port conflict, weird Python
-    // path, unexpected interpreter crash): show a friendly diagnostic dialog
-    // that explains in plain language, offers a copyable log excerpt, and
-    // points the user at the in-app setup page and the setup docs. Never
-    // dump raw stderr to a user who may not speak English.
-    const logPath = path.join(app.getPath("userData"), "kevrai.log");
-    const logExcerpt = (sidecarStderrTail.slice(-15).join("\n") || "(no sidecar logs captured)").slice(0, 1400);
-    const docsUrl = "https://kevrai.dpdns.org";
-    const reportUrl = "https://github.com/Kevrai/kevrai/issues";
-    const body = [
-      `Kevrai Omni couldn’t start its local Python backend (sidecar).`,
-      ``,
-      `Most common causes:`,
-      `• Python 3.10+ is missing or not on PATH`,
-      `• The port ${SIDECAR_PORT} is used by another program`,
-      `• A required package failed to install (see log below)`,
-      `• The sidecar binary is corrupted`,
-      ``,
-      `Try clicking “打开环境准备页” (opens the in-app setup page that can` +
-      ` auto-install Python and deps on Windows).`,
-      ``,
-      `If nothing works: click “复制日志到剪贴板” then paste it into a new` +
-      ` issue at ${reportUrl}.`,
-      ``,
-      `Full log: ${logPath}`,
-      ``,
-      `Reason: ${e.message}`,
-      ``,
-      `--- sidecar stderr tail ---`,
-      logExcerpt,
-    ].join("\n");
-    const { canceled, checkboxChecked } = dialog.showMessageBoxSync({
-      type: "warning",
-      title: "Kevrai Omni — 后端启动失败",
-      message: "Kevrai Omni 未能启动本地 Python 后端。",
-      detail: body,
-      buttons: ["关闭", "打开环境准备页", "复制日志到剪贴板", "打开帮助"],
-      defaultId: 1,
-      cancelId: 0,
-      checkboxLabel: "始终记住我选择的选项",
-    });
-    if (canceled) {
-      app.quit();
-      return;
-    }
-    const choice = 2 - canceled; // buttons are numbered from the last
-    if (choice === 1) {          // 打开环境准备页 (index 1)
-      createWindow(true);
-      return;
-    }
-    if (choice === 2) {          // 复制日志到剪贴板 (index 2)
-      clipboard.writeText(body);
-      dialog.showMessageBoxSync({
-        type: "info",
-        title: "Kevrai Omni",
-        message: "日志已复制到剪贴板。",
-        detail: `请把这段内容粘贴到: ${reportUrl}`,
-        buttons: ["确定"],
-      });
-      app.quit();
-      return;
-    }
-    if (choice === 3) {          // 打开帮助 (index 3)
-      shell.openExternal(docsUrl);
-      app.quit();
-      return;
-    }
-    app.quit();
+    // All other sidecar failure modes (health timeout, port conflict,
+    // weird Python path, unexpected interpreter crash, frozen sidecar
+    // crash...) -> route to the in-app bootstrap page. The page shows the
+    // stderr tail and offers one-click install buttons for Python (win)
+    // and pip deps (any platform). Never dump a raw technical error to a
+    // new user who may not speak English.
+    logInfo("routing sidecar failure to bootstrap page");
+    createWindow(true);
     return;
   }
 
