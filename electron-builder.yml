@@ -125,7 +125,7 @@ directories:
 
 publish:
   provider: github
-  owner: Bullobis
-  repo: kevrai-omni
+  owner: Kevrai
+  repo: kevrai
   releaseType: release
   vPrefixedTagName: true
